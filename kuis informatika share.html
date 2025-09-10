@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Digital Seru - Informatika Kelas 7</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-family: 'Fredoka', cursive;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .floating-emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .emoji1 { top: 20px; left: 50px; animation-delay: 0s; }
+        .emoji2 { top: 40px; right: 70px; animation-delay: 0.5s; }
+        .emoji3 { bottom: 20px; left: 100px; animation-delay: 1s; }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        /* Login Screen */
+        .login-container {
+            display: block;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .login-container h2 {
+            font-family: 'Fredoka', cursive;
+            font-size: 2rem;
+            color: #764ba2;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+            font-family: 'Fredoka', cursive;
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.6);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        /* Quiz Container */
+        .quiz-container {
+            display: none;
+        }
+        
+        .progress-container {
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .progress::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .question-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .question-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .question-number {
+            font-family: 'Fredoka', cursive;
+            font-size: 1.2rem;
+            color: #764ba2;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .question-number i {
+            margin-right: 10px;
+            color: #f5576c;
+        }
+        
+        .question-text {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .option.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        .option.correct {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-color: #38ef7d;
+            animation: pulse 0.5s ease;
+        }
+        
+        .option.incorrect {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            border-color: #f45c43;
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .option-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .nav-btn {
+            background: white;
+            color: #764ba2;
+            border: 2px solid #764ba2;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Fredoka', cursive;
+        }
+        
+        .nav-btn:hover:not(:disabled) {
+            background: #764ba2;
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Score Container */
+        .score-container {
+            display: none;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(118, 75, 162, 0.3);
+        }
+        
+        .score-text {
+            font-family: 'Fredoka', cursive;
+            font-size: 3rem;
+            color: white;
+        }
+        
+        .score-label {
+            font-size: 1.2rem;
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+        
+        .stars {
+            font-size: 2.5rem;
+            color: #ffd700;
+            margin: 20px 0;
+        }
+        
+        .message {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 20px 0;
+            font-family: 'Fredoka', cursive;
+        }
+        
+        .student-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .student-info span {
+            font-weight: 700;
+            color: #764ba2;
+        }
+        
+        /* Teacher Dashboard */
+        .teacher-dashboard {
+            display: none;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-header h2 {
+            font-family: 'Fredoka', cursive;
+            color: #764ba2;
+            font-size: 2rem;
+        }
+        
+        .class-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .class-tab {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        
+        .class-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+        
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .student-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .student-name {
+            font-weight: 700;
+            color: #764ba2;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .student-score {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .student-time {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .score-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        
+        .score-excellent { background: #38ef7d; }
+        .score-good { background: #4facfe; }
+        .score-average { background: #f093fb; }
+        .score-poor { background: #f5576c; }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            position: absolute;
+            animation: confetti-fall 3s linear;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .character {
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            font-size: 5rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #764ba2;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .realtime-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(56, 239, 125, 0.9);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .realtime-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            .question-text { font-size: 1.1rem; }
+            .options-container { grid-template-columns: 1fr; }
+            .navigation { flex-direction: column; gap: 15px; }
+            .nav-btn { width: 100%; }
+            .dashboard-header { flex-direction: column; gap: 20px; }
+            .students-grid { grid-template-columns: 1fr; }
+            .realtime-indicator { font-size: 0.8rem; padding: 6px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-laptop-code"></i> Kuis Digital Seru</h1>
+            <p>Informatika Kelas 7 - Ayo Asah Pengetahuanmu!</p>
+            <div class="floating-emoji emoji1">🚀</div>
+            <div class="floating-emoji emoji2">💡</div>
+            <div class="floating-emoji emoji3">🎮</div>
+        </div>
+        
+        <div class="content">
+            <!-- Login Screen -->
+            <div class="login-container" id="loginScreen">
+                <h2>Selamat Datang di Kuis Digital!</h2>
+                <p style="color: #666; margin-bottom: 30px;">Akses dari mana saja, hasil langsung terpantau!</p>
+                
+                <div class="form-group">
+                    <label for="userType">Login sebagai:</label>
+                    <select id="userType" onchange="toggleLogin()">
+                        <option value="student">Siswa</option>
+                        <option value="teacher">Guru</option>
+                    </select>
+                </div>
+                
+                <!-- Student Login -->
+                <div id="studentLogin">
+                    <div class="form-group">
+                        <label for="studentName">Nama Lengkap:</label>
+                        <input type="text" id="studentName" placeholder="Masukkan nama lengkap">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="studentClass">Kelas:</label>
+                        <select id="studentClass">
+                            <option value="">Pilih Kelas</option>
+                            <option value="7A">Kelas 7A</option>
+                            <option value="7B">Kelas 7B</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="studentLogin()">
+                        <i class="fas fa-sign-in-alt"></i> MASUK SEBAGAI SISWA
+                    </button>
+                </div>
+                
+                <!-- Teacher Login -->
+                <div id="teacherLogin" style="display: none;">
+                    <div class="form-group">
+                        <label for="teacherPassword">Password Guru:</label>
+                        <input type="password" id="teacherPassword" placeholder="Masukkan password">
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="teacherLogin()">
+                        <i class="fas fa-user-shield"></i> MASUK SEBAGAI GURU
+                    </button>
+                </div>
+                
+                <div class="character">👨‍🎓</div>
+            </div>
+            
+            <!-- Quiz Container -->
+            <div class="quiz-container" id="quizContainer">
+                <div class="timer" id="timer">⏱ 00:00</div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress" id="progressBar"></div>
+                    </div>
+                </div>
+                
+                <div class="question-container">
+                    <div class="question-number" id="questionNumber">
+                        <i class="fas fa-question-circle"></i> Soal 1
+                    </div>
+                    <div class="question-text" id="questionText">
+                        Memuat pertanyaan...
+                    </div>
+                    <div class="options-container" id="optionsContainer">
+                        <!-- Options will be generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="navigation">
+                    <button class="nav-btn" id="prevBtn" onclick="previousQuestion()" disabled>
+                        <i class="fas fa-arrow-left"></i> Sebelumnya
+                    </button>
+                    <button class="nav-btn" id="nextBtn" onclick="nextQuestion()" disabled>
+                        Selanjutnya <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Score Container -->
+            <div class="score-container" id="scoreContainer">
+                <div class="student-info">
+                    <span id="resultName"></span> - <span id="resultClass"></span>
+                </div>
+                
+                <div class="score-circle">
+                    <div class="score-text" id="scoreText">0</div>
+                </div>
+                <div class="score-label">Skor Akhirmu</div>
+                <div class="stars" id="stars"></div>
+                <div class="message" id="message"></div>
+                <button class="btn" onclick="backToLogin()">
+                    <i class="fas fa-arrow-left"></i> KEMBALI KE LOGIN
+                </button>
+                <div class="character">🎉</div>
+            </div>
+            
+            <!-- Teacher Dashboard -->
+            <div class="teacher-dashboard" id="teacherDashboard">
+                <div class="realtime-indicator">
+                    <span>REAL-TIME</span>
+                </div>
+                
+                <div class="dashboard-header">
+                    <h2><i class="fas fa-chalkboard-teacher"></i> Dashboard Guru</h2>
+                    <button class="btn" onclick="backToLogin()">
+                        <i class="fas fa-sign-out-alt"></i> KELUAR
+                    </button>
+                </div>
+                
+                <div class="class-tabs">
+                    <div class="class-tab active" onclick="showClass('7A')">Kelas 7A</div>
+                    <div class="class-tab" onclick="showClass('7B')">Kelas 7B</div>
+                </div>
+                
+                <div class="students-grid" id="studentsGrid">
+                    <!-- Student cards will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Firebase - GANTI dengan konfigurasi Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6Xe1lZ6p5p7p8p9q0r1s2t3u4v5w6x7y8",
+            authDomain: "kuis-informatika-smp.firebaseapp.com",
+            databaseURL: "https://kuis-informatika-smp-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "kuis-informatika-smp",
+            storageBucket: "kuis-informatika-smp.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdef123456789012345"
+        };
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Database Soal (35+ soal tanpa pemrograman)
+        const questions = [
+            // Hardware & Perangkat Keras
+            {
+                question: "Perangkat apa yang berfungsi sebagai 'otak' komputer?",
+                options: ["RAM", "CPU", "Harddisk", "Monitor"],
+                answer: 1
+            },
+            {
+                question: "Manakah yang termasuk perangkat input?",
+                options: ["Printer", "Speaker", "Mouse", "Monitor"],
+                answer: 2
+            },
+            {
+                question: "Fungsi utama RAM adalah...",
+                options: ["Menyimpan data permanen", "Menyimpan data sementara", "Memproses data", "Menampilkan gambar"],
+                answer: 1
+            },
+            {
+                question: "Perangkat apa yang digunakan untuk mencetak dokumen?",
+                options: ["Scanner", "Printer", "Projector", "Webcam"],
+                answer: 1
+            },
+            {
+                question: "SSD adalah jenis...",
+                options: ["Processor", "Motherboard", "Storage", "Graphics Card"],
+                answer: 2
+            },
+            
+            // Software & Sistem Operasi
+            {
+                question: "Manakah yang termasuk sistem operasi?",
+                options: ["Microsoft Word", "Windows", "Photoshop", "Chrome"],
+                answer: 1
+            },
+            {
+                question: "Fungsi utama sistem operasi adalah...",
+                options: ["Mengedit foto", "Mengelola perangkat keras", "Membuat presentasi", "Mengirim email"],
+                answer: 1
+            },
+            {
+                question: "Manakah yang BUKAN software aplikasi?",
+                options: ["GIMP", "VLC Media Player", "BIOS", "Mozilla Firefox"],
+                answer: 2
+            },
+            {
+                question: "Apa kepanjangan dari GUI?",
+                options: ["General User Interface", "Graphical User Interface", "General Utility Interface", "Graphical Utility Interface"],
+                answer: 1
+            },
+            {
+                question: "Software apa yang digunakan untuk pengolahan angka?",
+                options: ["Word Processor", "Spreadsheet", "Database", "Presentation"],
+                answer: 1
+            },
+            
+            // Jaringan & Internet
+            {
+                question: "Apa kepanjangan dari URL?",
+                options: ["Universal Resource Locator", "Uniform Resource Locator", "Unified Resource Locator", "Universal Reference Locator"],
+                answer: 1
+            },
+            {
+                question: "Perangkat apa yang menghubungkan beberapa komputer dalam jaringan lokal?",
+                options: ["Modem", "Router", "Switch", "Server"],
+                answer: 2
+            },
+            {
+                question: "HTTP berjalan di port berapa?",
+                options: ["21", "80", "443", "3306"],
+                answer: 1
+            },
+            {
+                question: "Apa fungsi dari DNS?",
+                options: ["Mengamankan jaringan", "Menerjemahkan domain ke IP", "Mempercepat koneksi", "Memblokir situs"],
+                answer: 1
+            },
+            {
+                question: "Manakah yang termasuk browser web?",
+                options: ["Windows Explorer", "Google Chrome", "Microsoft Office", "Adobe Reader"],
+                answer: 1
+            },
+            {
+                question: "Apa perbedaan LAN dan WAN?",
+                options: ["Kecepatan transfer", "Jangkauan geografis", "Jenis kabel", "Sistem operasi"],
+                answer: 1
+            },
+            {
+                question: "Perangkat apa yang digunakan untuk menghubungkan ke internet?",
+                options: ["Scanner", "Modem", "Printer", "Speaker"],
+                answer: 1
+            },
+            
+            // Keamanan Digital
+            {
+                question: "Manakah password yang paling aman?",
+                options: ["123456", "password", "P@ssw0rd!", "tanggal lahir"],
+                answer: 2
+            },
+            {
+                question: "Apa itu phishing?",
+                options: ["Virus komputer", "Pencurian data dengan tipuan", "Serangan DDoS", "Penghapusan data"],
+                answer: 1
+            },
+            {
+                question: "Apa yang harus dilakukan jika menerima email mencurigakan?",
+                options: ["Balas email", "Klik link yang ada", "Hapus email", "Forward ke teman"],
+                answer: 2
+            },
+            {
+                question: "Apa fungsi antivirus?",
+                options: ["Mempercepat komputer", "Mendeteksi dan menghapus virus", "Menambah storage", "Mengubah wallpaper"],
+                answer: 1
+            },
+            {
+                question: "Apa yang dimaksud dengan 2FA?",
+                options: ["2 Factor Authentication", "2 Fast Access", "2 File Application", "2 Format Audio"],
+                answer: 0
+            },
+            
+            // Teknologi Terkini
+            {
+                question: "Apa yang dimaksud dengan IoT?",
+                options: ["Internet of Things", "Internet of Technology", "Input of Things", "Interface of Technology"],
+                answer: 0
+            },
+            {
+                question: "Manakah yang termasuk contoh IoT?",
+                options: ["Smart TV", "Laptop", "Flashdisk", "Monitor CRT"],
+                answer: 0
+            },
+            {
+                question: "Apa fungsi utama robotika?",
+                options: ["Menggantikan manusia", "Membantu pekerjaan manusia", "Menghibur manusia", "Mengajari manusia"],
+                answer: 1
+            },
+            {
+                question: "Apa yang dimaksud dengan AI?",
+                options: ["Artificial Intelligence", "Automated Interface", "Advanced Integration", "Artificial Insemination"],
+                answer: 0
+            },
+            {
+                question: "Manakah yang BUKAKAN teknologi AI?",
+                options: ["Speech Recognition", "Image Recognition", "Text Editor", "Chatbot"],
+                answer: 2
+            },
+            
+            // Sejarah Teknologi
+            {
+                question: "Siapa yang dianggap sebagai bapak komputer modern?",
+                options: ["Bill Gates", "Charles Babbage", "Alan Turing", "Steve Jobs"],
+                answer: 2
+            },
+            {
+                question: "Komputer generasi pertama menggunakan...",
+                options: ["Transistor", "Integrated Circuit", "Vacuum Tube", "Microprocessor"],
+                answer: 2
+            },
+            {
+                question: "Kapan internet mulai dikembangkan?",
+                options: ["1950-an", "1960-an", "1970-an", "1980-an"],
+                answer: 1
+            },
+            
+            // Etika Digital
+            {
+                question: "Manakah yang termasuk etika digital?",
+                options: ["Menggunakan software bajakan", "Menghormati privasi orang lain", "Menyebar hoaks", "Membobol password"],
+                answer: 1
+            },
+            {
+                question: "Apa yang dimaksud dengan hak cipta digital?",
+                options: ["Hak untuk menyalin", "Hak untuk memodifikasi", "Perlindungan hukum atas karya digital", "Hak untuk menjual"],
+                answer: 2
+            },
+            {
+                question: "Manakah yang BUKAKAN contoh cyberbullying?",
+                options: ["Menghina di media sosial", "Membagikan informasi positif", "Mengancam online", "Menyebar rumor"],
+                answer: 1
+            },
+            
+            // Logika & Pemecahan Masalah
+            {
+                question: "Dalam deret 2, 4, 8, 16, ... angka berikutnya adalah...",
+                options: ["20", "24", "32", "18"],
+                answer: 2
+            },
+            {
+                question: "Jika semua laptop adalah elektronik, dan Asus adalah laptop, maka...",
+                options: ["Asus bukan elektronik", "Asus adalah elektronik", "Asus bisa terbang", "Asus adalah smartphone"],
+                answer: 1
+            },
+            {
+                question: "Manakah yang BUKAKAN langkah pemecahan masalah?",
+                options: ["Mengidentifikasi masalah", "Membuat solusi tanpa analisis", "Menguji solusi", "Evaluasi hasil"],
+                answer: 1
+            },
+            
+            // 1 Soal Pemrograman Sangat Sederhana
+            {
+                question: "Dalam logika komputer, 1 + 1 = ?",
+                options: ["1", "2", "10", "11"],
+                answer: 2
+            }
+        ];
+        
+        // Variabel Global
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = [];
+        let timer;
+        let seconds = 0;
+        let currentStudent = {};
+        let currentClass = '7A';
+        let resultsListener = null;
+        
+        // Fungsi Toggle Login
+        function toggleLogin() {
+            const userType = document.getElementById('userType').value;
+            const studentLogin = document.getElementById('studentLogin');
+            const teacherLogin = document.getElementById('teacherLogin');
+            
+            if (userType === 'student') {
+                studentLogin.style.display = 'block';
+                teacherLogin.style.display = 'none';
+            } else {
+                studentLogin.style.display = 'none';
+                teacherLogin.style.display = 'block';
+            }
+        }
+        
+        // Fungsi Login Siswa
+        function studentLogin() {
+            const name = document.getElementById('studentName').value;
+            const studentClass = document.getElementById('studentClass').value;
+            
+            if (!name || !studentClass) {
+                alert('Silakan lengkapi nama dan kelas!');
+                return;
+            }
+            
+            currentStudent = {
+                name: name,
+                class: studentClass
+            };
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            
+            // Acak soal
+            questions.sort(() => Math.random() - 0.5);
+            
+            // Mulai timer
+            startTimer();
+            
+            // Tampilkan soal pertama
+            showQuestion();
+        }
+        
+        // Fungsi Login Guru
+        function teacherLogin() {
+            const password = document.getElementById('teacherPassword').value;
+            
+            // Password sederhana: "guru123"
+            if (password === 'guru123') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('teacherDashboard').style.display = 'block';
+                loadStudentResults();
+            } else {
+                alert('Password salah!');
+            }
+        }
+        
+        // Fungsi Timer
+        function startTimer() {
+            timer = setInterval(() => {
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.getElementById('timer').textContent = 
+                    `⏱ ${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        // Fungsi Menampilkan Soal
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            
+            // Update nomor soal
+            document.getElementById('questionNumber').innerHTML = 
+                `<i class="fas fa-question-circle"></i> Soal ${currentQuestion + 1}`;
+            
+            // Update teks soal
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Update progress bar
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Generate options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.innerHTML = `<div class="option-text">${option}</div>`;
+                optionDiv.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            // Update tombol navigasi
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = true;
+            
+            // Jika sudah ada jawaban user, tampilkan
+            if (userAnswers[currentQuestion] !== undefined) {
+                const options = document.querySelectorAll('.option');
+                options[userAnswers[currentQuestion]].classList.add('selected');
+                document.getElementById('nextBtn').disabled = false;
+            }
+        }
+        
+        // Fungsi Memilih Opsi
+        function selectOption(index) {
+            // Hapus semua kelas selected
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Tandai opsi yang dipilih
+            document.querySelectorAll('.option')[index].classList.add('selected');
+            
+            // Simpan jawaban
+            userAnswers[currentQuestion] = index;
+            
+            // Enable tombol next
+            document.getElementById('nextBtn').disabled = false;
+        }
+        
+        // Fungsi Soal Berikutnya
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+        
+        // Fungsi Soal Sebelumnya
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+        
+        // Fungsi Selesai Kuis
+        function finishQuiz() {
+            clearInterval(timer);
+            
+            // Hitung skor
+            score = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (userAnswers[i] === questions[i].answer) {
+                    score++;
+                }
+            }
+            
+            // Simpan hasil siswa ke Firebase
+            saveStudentResult();
+            
+            // Tampilkan hasil
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('scoreContainer').style.display = 'block';
+            
+            // Update info siswa
+            document.getElementById('resultName').textContent = currentStudent.name;
+            document.getElementById('resultClass').textContent = currentStudent.class;
+            
+            // Update skor
+            const percentage = Math.round((score / questions.length) * 100);
+            document.getElementById('scoreText').textContent = `${score}/${questions.length}`;
+            
+            // Update stars
+            let stars = '';
+            if (percentage >= 90) stars = '⭐⭐⭐⭐⭐';
+            else if (percentage >= 70) stars = '⭐⭐⭐⭐';
+            else if (percentage >= 50) stars = '⭐⭐⭐';
+            else if (percentage >= 30) stars = '⭐⭐';
+            else stars = '⭐';
+            
+            document.getElementById('stars').textContent = stars;
+            
+            // Update pesan
+            let message = '';
+            if (percentage >= 90) {
+                message = 'LUAR BIASA! Kamu ahli teknologi! 🎉';
+                createConfetti();
+            } else if (percentage >= 70) {
+                message = 'HEBAT! Pengetahuan digitalmu sangat baik! 👍';
+            } else if (percentage >= 50) {
+                message = 'BAGUS! Terus tingkatkan belajarmu! 😊';
+            } else {
+                message = 'SEMANGAT! Coba lagi ya! 💪';
+            }
+            
+            document.getElementById('message').textContent = message;
+        }
+        
+        // Fungsi Simpan Hasil Siswa ke Firebase
+        function saveStudentResult() {
+            const result = {
+                name: currentStudent.name,
+                class: currentStudent.class,
+                score: score,
+                total: questions.length,
+                percentage: Math.round((score / questions.length) * 100),
+                time: seconds,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Simpan ke Firebase Realtime Database
+            database.ref('results').push(result)
+                .then(() => {
+                    console.log('Result saved successfully');
+                })
+                .catch((error) => {
+                    console.error('Error saving result:', error);
+                });
+        }
+        
+        // Fungsi Load Hasil Siswa dari Firebase
+        function loadStudentResults() {
+            // Hapus listener sebelumnya jika ada
+            if (resultsListener) {
+                database.ref('results').off('value', resultsListener);
+            }
+            
+            // Set listener untuk real-time updates
+            resultsListener = database.ref('results').orderByChild('class').equalTo(currentClass);
+            
+            resultsListener.on('value', (snapshot) => {
+                const results = [];
+                snapshot.forEach((childSnapshot) => {
+                    results.push(childSnapshot.val());
+                });
+                displayStudents(results);
+            });
+        }
+        
+        // Fungsi Tampilkan Siswa
+        function displayStudents(results) {
+            const studentsGrid = document.getElementById('studentsGrid');
+            studentsGrid.innerHTML = '';
+            
+            if (results.length === 0) {
+                studentsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">Belum ada hasil untuk kelas ini</p>';
+                return;
+            }
+            
+            // Urutkan berdasarkan timestamp terbaru
+            results.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            results.forEach(student => {
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                
+                let scoreClass = 'score-poor';
+                if (student.percentage >= 90) scoreClass = 'score-excellent';
+                else if (student.percentage >= 70) scoreClass = 'score-good';
+                else if (student.percentage >= 50) scoreClass = 'score-average';
+                
+                const minutes = Math.floor(student.time / 60);
+                const secs = student.time % 60;
+                const timeStr = `${minutes}:${secs.toString().padStart(2, '0')}`;
+                
+                card.innerHTML = `
+                    <div class="student-name">${student.name}</div>
+                    <div class="student-score">${student.score}/${student.total}</div>
+                    <div class="score-badge ${scoreClass}">${student.percentage}%</div>
+                    <div class="student-time">Waktu: ${timeStr}</div>
+                `;
+                
+                studentsGrid.appendChild(card);
+            });
+        }
+        
+        // Fungsi Tampilkan Kelas
+        function showClass(className) {
+            currentClass = className;
+            
+            // Update tab
+            document.querySelectorAll('.class-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Reload data
+            loadStudentResults();
+        }
+        
+        // Fungsi Membuat Confetti
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 50);
+            }
+        }
+        
+        // Fungsi Kembali ke Login
+        function backToLogin() {
+            // Reset variabel
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+            seconds = 0;
+            currentStudent = {};
+            
+            // Reset form
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentClass').value = '';
+            document.getElementById('teacherPassword').value = '';
+            
+            // Hapus listener jika ada
+            if (resultsListener) {
+                database.ref('results').off('value', resultsListener);
+                resultsListener = null;
+            }
+            
+            // Tampilkan login screen
+            document.getElementById('loginScreen').style.display = 'block';
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('scoreContainer').style.display = 'none';
+            document.getElementById('teacherDashboard').style.display = 'none';
+            
+            // Reset progress bar
+            document.getElementById('progressBar').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
